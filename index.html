@@ -166,7 +166,6 @@
             apiModalInstance.show();
         }
 
-        // Buton Dinleyicileri (Event Listeners)
         document.getElementById('btnSettings').addEventListener('click', openSettings);
         document.getElementById('btnNextStep1').addEventListener('click', goToStep2);
         document.getElementById('btnBackStep2').addEventListener('click', () => showStep(1));
@@ -192,7 +191,6 @@
             </div>
         `).join('');
 
-        // Kartlara tıklama olayı ekle
         document.querySelectorAll('.person-card').forEach(card => {
             card.addEventListener('click', function() {
                 togglePerson(this.getAttribute('data-id'));
@@ -322,7 +320,7 @@ Karar Konusu: "${decisionData.title}"
 Detaylar: "${decisionData.details}"
 Tüm Mülakat Geçmişi: ${JSON.stringify(interviewHistory, null, 2)}
 
-Lütfen aşağıdaki formatte profesyonel, yapıcı ve derinlikli bir NİHAİ KARAR VE ANALİZ RAPORU oluştur. HTML formatında ver (div, h5, p, ul, li, table etiketlerini kullan, markdown kullanma):
+Lütfen aşağıdaki formatta profesyonel, yapıcı ve derinlikli bir NİHAİ KARAR VE ANALİZ RAPORU oluştur. HTML formatında ver (div, h5, p, ul, li, table etiketlerini kullan, markdown kullanma):
 
 1. <h5><i class="bi bi-compass"></i> Genel Stratejik Öneri</h5>
 2. <h5><i class="bi bi-people"></i> Heyet Üyelerinin Değerlendirmeleri</h5>
@@ -347,7 +345,8 @@ Lütfen aşağıdaki formatte profesyonel, yapıcı ve derinlikli bir NİHAİ KA
             throw new Error('API Key bulunamadı.');
         }
 
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+        // v1 ve gemini-1.5-flash kombinasyonu ile model hatası riski ortadan kaldırıldı
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
