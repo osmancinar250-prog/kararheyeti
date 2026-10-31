@@ -46,4 +46,325 @@
         <h4 class="mb-3 text-info"><i class="bi bi-pencil-square me-2"></i>2. Karar Konusunu Tanımlayın</h4>
         <div class="mb-3">
             <label class="form-label">Ne hakkında karar vermek istiyorsunuz?</label>
-            <input type="
+            <input type="text" id="decisionTitle" class="form-control bg-dark text-white border-secondary" placeholder="Örn: Yeni bir iş teklifini kabul etmeli miyim?">
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Detaylar ve Mevcut Durum:</label>
+            <textarea id="decisionDetails" class="form-control bg-dark text-white border-secondary" rows="4" placeholder="Artıları, eksileri ve sizi kararsız bırakan noktaları kısaca yazın..."></textarea>
+        </div>
+        <div class="d-flex justify-content-between">
+            <button class="btn btn-outline-secondary" onclick="showStep(1)"><i class="bi bi-arrow-left"></i> Geri</button>
+            <button class="btn btn-accent px-4" onclick="startInterview()">Mülakatı Başlat <i class="bi bi-play-fill"></i></button>
+        </div>
+    </div>
+
+    <!-- Step 3: Çapraz Sorgu Mülakatı -->
+    <div id="step3" class="card-custom p-4 mb-4 hidden">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h4 class="text-info mb-0"><i class="bi bi-chat-quote-fill me-2"></i>Heyet Sizi Sorguluyor</h4>
+            <span id="questionCount" class="badge bg-warning text-dark fs-6">Soru 1 / 4</span>
+        </div>
+        <div class="progress mb-4" style="height: 6px;">
+            <div id="progressBar" class="progress-bar bg-warning" style="width: 25%"></div>
+        </div>
+
+        <div id="loadingQuestion" class="text-center py-5 hidden">
+            <div class="spinner-border text-info mb-2"></div>
+            <p class="text-secondary">Heyet üyesi düşüncelerini şekillendiriyor...</p>
+        </div>
+
+        <div id="questionContainer">
+            <div class="d-flex align-items-start mb-3">
+                <div class="text-center me-3" style="width: 70px;">
+                    <div id="interviewerAvatar" class="fs-1">🏛️</div>
+                    <strong id="interviewerName" class="d-block text-warning small">---</strong>
+                </div>
+                <div class="chat-bubble flex-grow-1">
+                    <p id="questionText" class="mb-0 text-light fs-5">Yükleniyor...</p>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <textarea id="userAnswer" class="form-control bg-dark text-white border-secondary" rows="3" placeholder="Yanıtınızı buraya yazın..."></textarea>
+            </div>
+
+            <div class="d-flex justify-content-between">
+                <button class="btn btn-outline-warning" onclick="generateReport(true)">Raporu Erken Oluştur</button>
+                <button class="btn btn-accent px-4" onclick="submitAnswer()">Cevapla & Sonraki Soru <i class="bi bi-arrow-right"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Step 4: Nihai Karar Metni -->
+    <div id="step4" class="card-custom p-4 mb-4 hidden">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h4 class="text-success mb-0"><i class="bi bi-file-earmark-check-fill me-2"></i>Nihai Karar ve Analiz Raporu</h4>
+            <div>
+                <button class="btn btn-outline-light btn-sm me-2" onclick="window.print()"><i class="bi bi-printer"></i> Yazdır</button>
+                <button class="btn btn-outline-info btn-sm" onclick="copyReport()"><i class="bi bi-copy"></i> Kopyala</button>
+            </div>
+        </div>
+        
+        <div id="loadingReport" class="text-center py-5">
+            <div class="spinner-border text-success mb-2" style="width: 3rem; height: 3rem;"></div>
+            <h5 class="text-light mt-3">Heyet Karar Metnini Hazırlıyor...</h5>
+            <p class="text-secondary">Tüm yanıtlarınız harmanlanıyor ve analiz ediliyor.</p>
+        </div>
+
+        <div id="reportContent" class="hidden text-light border-top border-secondary pt-3"></div>
+        
+        <div class="mt-4 text-center">
+            <button class="btn btn-accent px-4" onclick="resetApp()"><i class="bi bi-arrow-counterclockwise"></i> Yeni Karar Analizi Başlat</button>
+        </div>
+    </div>
+
+</div>
+
+<!-- API Modal -->
+<div class="modal fade" id="apiModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content bg-dark text-white border-secondary">
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title"><i class="bi bi-key-fill text-warning me-2"></i>Gemini API Anahtarı</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="small text-secondary">Google AI Studio'dan aldığınız ücretsiz API key'i buraya yapıştırın. Anahtarınız sadece tarayıcınızda saklanır.</p>
+                <input type="password" id="apiKeyInput" class="form-control bg-secondary text-white border-0" placeholder="AIzaSy...">
+            </div>
+            <div class="modal-footer border-secondary">
+                <button type="button" class="btn btn-accent" onclick="saveApiKey()">Kaydet</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    const PEOPLE = [
+        { id: 'ataturk', name: 'Mustafa Kemal Atatürk', title: 'Strateji ve Liderlik', avatar: '🇹🇷', prompt: 'Akılcı, gerçekçi, bağımsız kararlar alan, vizyoner ve stratejik sorular soran lider.' },
+        { id: 'descartes', name: 'René Descartes', title: 'Kartezyen Mantık', avatar: '📜', prompt: 'Metodolojik şüpheci, mantıksal, analitik ve adımları bölen filozof.' },
+        { id: 'einstein', name: 'Albert Einstein', title: 'Analitik ve Bilimsel', avatar: '⚛️', prompt: 'Göreceli düşünen, merak uyandıran, yaratıcı ve analitik yaklaşan bilim insanı.' },
+        { id: 'aristo', name: 'Aristoteles', title: 'Erdem ve Mantık', avatar: '🏛️', prompt: 'Altın orta (denge) ilkesini savunan, erdem etiği ve mantık çerçevesinde soran filozof.' },
+        { id: 'aurelius', name: 'Marcus Aurelius', title: 'Stoa Felsefesi', avatar: '🛡️', prompt: 'Kontrol edebildiklerine odaklanan, duygusal tepkileri süzerek rasyonelliği arayan Stoacı.' },
+        { id: 'mevlana', name: 'Mevlâna Celâleddîn-i Rûmî', title: 'Sezgisel ve İçsel', avatar: '🕊️', prompt: 'İç huzur, değerler, niyet ve uzun vadeli ruhsal/insani etkileri sorgulayan düşünür.' },
+        { id: 'machiavelli', name: 'Niccolò Machiavelli', title: 'Pragmatizm ve Gerçekçilik', avatar: '🏰', prompt: 'Güç, kaynaklar, somut sonuçlar ve pragmatik riskleri sorgulayan stratejist.' },
+        { id: 'davinci', name: 'Leonardo da Vinci', title: 'Yaratıcılık ve İnovasyon', avatar: '🎨', prompt: 'Farklı açılardan bakan, disiplinlerarası düşündüren ve yenilikçi sorgulayan deha.' }
+    ];
+
+    let selectedPeople = [];
+    let currentQuestionIndex = 0;
+    let interviewHistory = [];
+    let decisionData = { title: '', details: '' };
+    let apiModalInstance = null;
+
+    document.addEventListener("DOMContentLoaded", () => {
+        renderPeople();
+        apiModalInstance = new bootstrap.Modal(document.getElementById('apiModal'));
+        if (!localStorage.getItem('gemini_api_key')) {
+            openSettings();
+        }
+    });
+
+    function renderPeople() {
+        const grid = document.getElementById('peopleGrid');
+        if (!grid) return;
+        grid.innerHTML = PEOPLE.map(p => `
+            <div class="col-md-3 col-6">
+                <div class="card-custom p-3 text-center person-card" id="card-${p.id}" onclick="togglePerson('${p.id}')">
+                    <div class="fs-1 mb-1">${p.avatar}</div>
+                    <strong class="d-block text-light small">${p.name}</strong>
+                    <span class="text-secondary" style="font-size: 0.75rem;">${p.title}</span>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function togglePerson(id) {
+        if (selectedPeople.includes(id)) {
+            selectedPeople = selectedPeople.filter(p => p !== id);
+            document.getElementById(`card-${id}`).classList.remove('selected');
+        } else {
+            if (selectedPeople.length >= 4) {
+                alert('En fazla 4 kişiden oluşan bir heyet seçebilirsiniz.');
+                return;
+            }
+            selectedPeople.push(id);
+            document.getElementById(`card-${id}`).classList.add('selected');
+        }
+    }
+
+    function showStep(step) {
+        [1,2,3,4].forEach(s => {
+            const el = document.getElementById(`step${s}`);
+            if (el) el.classList.add('hidden');
+        });
+        const target = document.getElementById(`step${step}`);
+        if (target) target.classList.remove('hidden');
+    }
+
+    function goToStep2() {
+        if (selectedPeople.length === 0) {
+            alert('Lütfen en az 1 danışman seçin.');
+            return;
+        }
+        showStep(2);
+    }
+
+    async function startInterview() {
+        const title = document.getElementById('decisionTitle').value.trim();
+        const details = document.getElementById('decisionDetails').value.trim();
+        if (!title) {
+            alert('Lütfen karar konusunu girin.');
+            return;
+        }
+        decisionData = { title, details };
+        interviewHistory = [];
+        currentQuestionIndex = 0;
+        showStep(3);
+        await loadNextQuestion();
+    }
+
+    async function loadNextQuestion() {
+        if (currentQuestionIndex >= selectedPeople.length) {
+            await generateReport();
+            return;
+        }
+
+        const person = PEOPLE.find(p => p.id === selectedPeople[currentQuestionIndex]);
+        document.getElementById('questionCount').innerText = `Soru ${currentQuestionIndex + 1} / ${selectedPeople.length}`;
+        document.getElementById('progressBar').style.width = `${((currentQuestionIndex + 1) / selectedPeople.length) * 100}%`;
+        
+        document.getElementById('interviewerAvatar').innerText = person.avatar;
+        document.getElementById('interviewerName').innerText = person.name;
+        document.getElementById('userAnswer').value = '';
+
+        document.getElementById('questionContainer').classList.add('hidden');
+        document.getElementById('loadingQuestion').classList.remove('hidden');
+
+        const prompt = `Sen ${person.name}'sın. (${person.prompt}).
+Kullanıcı şu konuda bir karar vermeye çalışıyor: "${decisionData.title}".
+Ek Detaylar: "${decisionData.details}".
+Önceki Konuşmalar: ${JSON.stringify(interviewHistory)}.
+
+Lütfen kendi felsefi ve kişisel bakış açınla, kullanıcının doğru kararı vermesine yardımcı olacak TEK VE NET bir sorgulama sorusu sor. Kısa, vurucu ve kendi üslubunda olsun. Yanıt olarak SADECE soruyu ver.`;
+
+        try {
+            const question = await fetchGemini(prompt);
+            document.getElementById('questionText').innerText = question;
+        } catch (e) {
+            document.getElementById('questionText').innerText = `${person.name} olarak soruyorum: Bu karar senin temel hedeflerinle ve ilkelerinle ne kadar örtüşüyor?`;
+        }
+
+        document.getElementById('loadingQuestion').classList.add('hidden');
+        document.getElementById('questionContainer').classList.remove('hidden');
+    }
+
+    async function submitAnswer() {
+        const answer = document.getElementById('userAnswer').value.trim();
+        if (!answer) {
+            alert('Lütfen yanıtınızı yazın.');
+            return;
+        }
+
+        const person = PEOPLE.find(p => p.id === selectedPeople[currentQuestionIndex]);
+        const question = document.getElementById('questionText').innerText;
+
+        interviewHistory.push({
+            person: person.name,
+            question: question,
+            answer: answer
+        });
+
+        currentQuestionIndex++;
+        if (currentQuestionIndex < selectedPeople.length) {
+            await loadNextQuestion();
+        } else {
+            await generateReport();
+        }
+    }
+
+    async function generateReport(early = false) {
+        showStep(4);
+        document.getElementById('loadingReport').classList.remove('hidden');
+        document.getElementById('reportContent').classList.add('hidden');
+
+        const selectedNames = selectedPeople.map(id => PEOPLE.find(p => p.id === id).name).join(', ');
+        
+        const prompt = `Sen seçkin danışmanlar heyetinin (${selectedNames}) sekreteryası ve nihai analiz motorusun.
+Karar Konusu: "${decisionData.title}"
+Detaylar: "${decisionData.details}"
+Mülakat Kayıtları: ${JSON.stringify(interviewHistory)}
+
+Lütfen aşağıdaki formatta profesyonel, yapıcı ve derinlikli bir NİHAİ KARAR VE ANALİZ RAPORU oluştur. HTML formatında ver (div, h5, p, ul, li, table etiketlerini kullan, markdown kullanma):
+
+1. <h5><i class="bi bi-compass"></i> Genel Stratejik Öneri</h5> (Kısa ve net nihai tavsiye)
+2. <h5><i class="bi bi-people"></i> Heyet Üyelerinin Değerlendirmeleri</h5> (Her bir seçilen üyenin kendi felsefesiyle konuyu nasıl yorumladığı)
+3. <h5><i class="bi bi-grid-3x3-gap"></i> Risk ve Fırsat Matrisi</h5> (Tablo şeklinde Riskler vs Fırsatlar)
+4. <h5><i class="bi bi-list-check"></i> Eylem Planı (Önerilen 3 Adım)</h5> (Sıralı liste)`;
+
+        try {
+            const reportHtml = await fetchGemini(prompt);
+            document.getElementById('reportContent').innerHTML = reportHtml;
+        } catch (e) {
+            document.getElementById('reportContent').innerHTML = `<div class="alert alert-danger">Rapor oluşturulurken hata oluştu: ${e.message}</div>`;
+        }
+
+        document.getElementById('loadingReport').classList.add('hidden');
+        document.getElementById('reportContent').classList.remove('hidden');
+    }
+
+    async function fetchGemini(prompt) {
+        const apiKey = localStorage.getItem('gemini_api_key');
+        if (!apiKey) {
+            openSettings();
+            throw new Error('API Key bulunamadı.');
+        }
+
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                contents: [{ parts: [{ text: prompt }] }]
+            })
+        });
+
+        const data = await response.json();
+        if (data.error) throw new Error(data.error.message);
+        return data.candidates[0].content.parts[0].text;
+    }
+
+    function openSettings() {
+        document.getElementById('apiKeyInput').value = localStorage.getItem('gemini_api_key') || '';
+        if (apiModalInstance) {
+            apiModalInstance.show();
+        }
+    }
+
+    function saveApiKey() {
+        const key = document.getElementById('apiKeyInput').value.trim();
+        if (key) {
+            localStorage.setItem('gemini_api_key', key);
+            if (apiModalInstance) {
+                apiModalInstance.hide();
+            }
+        }
+    }
+
+    function copyReport() {
+        const text = document.getElementById('reportContent').innerText;
+        navigator.clipboard.writeText(text);
+        alert('Rapor panoya kopyalandı.');
+    }
+
+    function resetApp() {
+        selectedPeople = [];
+        interviewHistory = [];
+        renderPeople();
+        document.getElementById('decisionTitle').value = '';
+        document.getElementById('decisionDetails').value = '';
+        showStep(1);
+    }
+</script>
+</body>
+</html>
