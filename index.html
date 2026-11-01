@@ -10,14 +10,14 @@
         :root { --bg-dark: #0f172a; --card-bg: #1e293b; --accent: #38bdf8; --accent-gold: #fbbf24; }
         body { background-color: var(--bg-dark); color: #f8fafc; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; min-height: 100vh; }
         .card-custom { background: var(--card-bg); border: 1px solid #334155; border-radius: 12px; }
-        .person-card { cursor: pointer; transition: all 0.2s; border: 2px solid transparent; }
+        .person-card { cursor: pointer; transition: all 0.2s; border: 2px solid transparent; height: 100%; }
         .person-card:hover { transform: translateY(-3px); border-color: var(--accent); }
         .person-card.selected { border-color: var(--accent-gold); background: rgba(251, 191, 36, 0.05); }
         .btn-accent { background: var(--accent); color: #0f172a; font-weight: 600; }
         .btn-accent:hover { background: #7dd3fc; color: #0f172a; }
         .chat-bubble { background: #334155; border-radius: 12px; padding: 15px; margin-bottom: 15px; position: relative; }
         .chat-bubble::before { content: ''; position: absolute; left: -10px; top: 15px; border-width: 5px 10px 5px 0; border-style: solid; border-color: transparent #334155 transparent transparent; }
-        .avatar-img { width: 80px; height: 80px; object-fit: cover; border-radius: 50%; border: 2px solid var(--accent); }
+        .avatar-img { width: 85px; height: 85px; object-fit: cover; border-radius: 50%; border: 2px solid var(--accent); }
         .avatar-lg { width: 120px; height: 120px; object-fit: cover; border-radius: 50%; border: 3px solid var(--accent-gold); box-shadow: 0 0 15px rgba(251,191,36,0.3); }
         .report-avatar { width: 65px; height: 65px; object-fit: cover; border-radius: 50%; border: 2px solid var(--accent-gold); }
         .hidden { display: none !important; }
@@ -38,7 +38,27 @@
     <!-- Step 1: Heyet Seçimi -->
     <div id="step1" class="card-custom p-4 mb-4">
         <h4 class="mb-3 text-info"><i class="bi bi-people-fill me-2"></i>1. Danışman Heyetinizi Seçin (Max 4 Kişi)</h4>
-        <div class="row g-3" id="peopleGrid"></div>
+        <div class="row g-3 mb-4" id="peopleGrid"></div>
+
+        <!-- Özel Danışman Ekleme Alanı -->
+        <div class="p-3 bg-dark rounded border border-secondary mb-3">
+            <h6 class="text-warning mb-2"><i class="bi bi-person-plus-fill me-1"></i> Listede Olmayan Özel Bir Danışman Ekle</h6>
+            <div class="row g-2">
+                <div class="col-md-4">
+                    <input type="text" id="customName" class="form-control form-control-sm bg-secondary text-white border-0" placeholder="İsim (Örn: Seneca)">
+                </div>
+                <div class="col-md-4">
+                    <input type="text" id="customTitle" class="form-control form-control-sm bg-secondary text-white border-0" placeholder="Unvan (Örn: Stoa Filozofu)">
+                </div>
+                <div class="col-md-4">
+                    <input type="text" id="customPrompt" class="form-control form-control-sm bg-secondary text-white border-0" placeholder="Karakter / Yaklaşım tarzı">
+                </div>
+                <div class="col-12 mt-2">
+                    <button type="button" id="btnAddCustom" class="btn btn-outline-warning btn-sm w-100">+ Heyete Özel Danışman Olarak Ekle ve Seç</button>
+                </div>
+            </div>
+        </div>
+
         <div class="mt-4 text-end">
             <button id="btnNextStep1" class="btn btn-accent px-4">Devam Et <i class="bi bi-arrow-right"></i></button>
         </div>
@@ -146,15 +166,15 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    const PEOPLE = [
-        { id: 'ataturk', name: 'Mustafa Kemal Atatürk', title: 'Strateji ve Liderlik', image: 'https://upload.wikimedia.org/wikipedia/commons/e/e1/Atat%C3%BCrk_1920s.jpg', prompt: 'Akılcı, gerçekçi, bağımsız kararlar alan, vizyoner ve stratejik yönü sorgulayan lider.' },
-        { id: 'descartes', name: 'René Descartes', title: 'Kartezyen Mantık', image: 'https://upload.wikimedia.org/wikipedia/commons/7/73/Frans_Hals_-_Portret_van_Ren%C3%A9_Descartes.jpg', prompt: 'Metodolojik şüpheci, mantıksal, analitik ve varsayımları parçalara bölerek sorgulayan filozof.' },
-        { id: 'einstein', name: 'Albert Einstein', title: 'Analitik ve Bilimsel', image: 'https://upload.wikimedia.org/wikipedia/commons/3/3e/Einstein_1921_by_F_Schmutzer_-_restoration.jpg', prompt: 'Göreceli düşünen, kalıpların dışına çıkaran, merak uyandıran bilim insanı.' },
-        { id: 'aristo', name: 'Aristoteles', title: 'Erdem ve Mantık', image: 'https://upload.wikimedia.org/wikipedia/commons/a/ae/Aristotle_Altemps_Rome_Inv8575.jpg', prompt: 'Altın orta (denge) ilkesini, erdemi ve mantık çerçevesini sorgulayan filozof.' },
-        { id: 'aurelius', name: 'Marcus Aurelius', title: 'Stoa Felsefesi', image: 'https://upload.wikimedia.org/wikipedia/commons/1/1c/Marcus_Aurelius_Glyptothek_Munich_326.jpg', prompt: 'Kontrol edebildiklerine odaklanan, duygusal tepkileri süzerek rasyonelliği arayan Stoacı.' },
-        { id: 'mevlana', name: 'Mevlâna Celâleddîn-i Rûmî', title: 'Sezgisel ve İçsel', image: 'https://upload.wikimedia.org/wikipedia/commons/d/d4/Rumi_painting.jpg', prompt: 'İç huzur, değerler, niyet ve uzun vadeli ruhsal etkileri sorgulayan düşünür.' },
-        { id: 'machiavelli', name: 'Niccolò Machiavelli', title: 'Pragmatizm ve Gerçekçilik', image: 'https://upload.wikimedia.org/wikipedia/commons/e/e2/Santi_di_Tito_-_Niccol%C3%B2_Machiavelli_%28Palazzo_Vecchio%29.jpg', prompt: 'Güç, kaynaklar, somut sonuçlar ve pragmatik riskleri sorgulayan stratejist.' },
-        { id: 'davinci', name: 'Leonardo da Vinci', title: 'Yaratıcılık ve İnovasyon', image: 'https://upload.wikimedia.org/wikipedia/commons/b/ba/Leonardo_self.jpg', prompt: 'Farklı açılardan bakan, disiplinlerarası alternatifleri düşündüren deha.' }
+    let PEOPLE = [
+        { id: 'ataturk', name: 'Mustafa Kemal Atatürk', title: 'Strateji ve Liderlik', image: 'https://images.unsplash.com/photo-1557683316-973673baf926?w=300&auto=format&fit=crop&q=80', prompt: 'Akılcı, gerçekçi, bağımsız kararlar alan, vizyoner ve stratejik yönü sorgulayan lider.' },
+        { id: 'descartes', name: 'René Descartes', title: 'Kartezyen Mantık', image: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=300&auto=format&fit=crop&q=80', prompt: 'Metodolojik şüpheci, mantıksal, analitik ve varsayımları parçalara bölerek sorgulayan filozof.' },
+        { id: 'einstein', name: 'Albert Einstein', title: 'Analitik ve Bilimsel', image: 'https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=300&auto=format&fit=crop&q=80', prompt: 'Göreceli düşünen, kalıpların dışına çıkaran, merak uyandıran bilim insanı.' },
+        { id: 'aristo', name: 'Aristoteles', title: 'Erdem ve Mantık', image: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?w=300&auto=format&fit=crop&q=80', prompt: 'Altın orta (denge) ilkesini, erdemi ve mantık çerçevesini sorgulayan filozof.' },
+        { id: 'aurelius', name: 'Marcus Aurelius', title: 'Stoa Felsefesi', image: 'https://images.unsplash.com/photo-1582555172866-f73bb12a2ab3?w=300&auto=format&fit=crop&q=80', prompt: 'Kontrol edebildiklerine odaklanan, duygusal tepkileri süzerek rasyonelliği arayan Stoacı.' },
+        { id: 'mevlana', name: 'Mevlâna Celâleddîn-i Rûmî', title: 'Sezgisel ve İçsel', image: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=300&auto=format&fit=crop&q=80', prompt: 'İç huzur, değerler, niyet ve uzun vadeli ruhsal etkileri sorgulayan düşünür.' },
+        { id: 'machiavelli', name: 'Niccolò Machiavelli', title: 'Pragmatizm ve Gerçekçilik', image: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=300&auto=format&fit=crop&q=80', prompt: 'Güç, kaynaklar, somut sonuçlar ve pragmatik riskleri sorgulayan stratejist.' },
+        { id: 'davinci', name: 'Leonardo da Vinci', title: 'Yaratıcılık ve İnovasyon', image: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?w=300&auto=format&fit=crop&q=80', prompt: 'Farklı açılardan bakan, disiplinlerarası alternatifleri düşündüren deha.' }
     ];
 
     let selectedPeople = [];
@@ -181,6 +201,7 @@
         document.getElementById('btnCopy').addEventListener('click', copyReport);
         document.getElementById('btnReset').addEventListener('click', resetApp);
         document.getElementById('btnSaveKey').addEventListener('click', saveApiKey);
+        document.getElementById('btnAddCustom').addEventListener('click', addCustomPerson);
     });
 
     function renderPeople() {
@@ -188,7 +209,7 @@
         if (!grid) return;
         grid.innerHTML = PEOPLE.map(p => `
             <div class="col-md-3 col-6">
-                <div class="card-custom p-3 text-center person-card" id="card-${p.id}" data-id="${p.id}">
+                <div class="card-custom p-3 text-center person-card ${selectedPeople.includes(p.id) ? 'selected' : ''}" id="card-${p.id}" data-id="${p.id}">
                     <img src="${p.image}" alt="${p.name}" class="avatar-img mb-2 shadow-sm">
                     <strong class="d-block text-light small">${p.name}</strong>
                     <span class="text-secondary" style="font-size: 0.75rem;">${p.title}</span>
@@ -201,6 +222,41 @@
                 togglePerson(this.getAttribute('data-id'));
             });
         });
+    }
+
+    function addCustomPerson() {
+        const name = document.getElementById('customName').value.trim();
+        const title = document.getElementById('customTitle').value.trim();
+        const promptText = document.getElementById('customPrompt').value.trim();
+
+        if (!name || !title || !promptText) {
+            alert('Lütfen özel danışman için İsim, Unvan ve Karakter alanlarını doldurun.');
+            return;
+        }
+
+        if (selectedPeople.length >= 4) {
+            alert('En fazla 4 kişiden oluşan bir heyet seçebilirsiniz.');
+            return;
+        }
+
+        const customId = 'custom_' + Date.now();
+        const newPerson = {
+            id: customId,
+            name: name,
+            title: title,
+            image: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80', // Varsayılan genel portre
+            prompt: promptText
+        };
+
+        PEOPLE.push(newPerson);
+        selectedPeople.push(customId);
+
+        document.getElementById('customName').value = '';
+        document.getElementById('customTitle').value = '';
+        document.getElementById('customPrompt').value = '';
+
+        renderPeople();
+        alert(`${name} heyete eklendi ve seçildi!`);
     }
 
     function togglePerson(id) {
@@ -266,7 +322,7 @@
         document.getElementById('questionContainer').classList.add('hidden');
         document.getElementById('loadingQuestion').classList.remove('hidden');
 
-        const prompt = `Sen ${person.name}'sın. Karakter özelliklerin: ${person.prompt}
+        const prompt = `Sen ${person.name}'sın. Karakter özelliklerin ve yaklaşımın: ${person.prompt}
 Kullanıcının ana karar konusu: "${decisionData.title}"
 Kullanıcının ilk detay açıklaması: "${decisionData.details}"
 
