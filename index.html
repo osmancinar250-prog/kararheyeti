@@ -10,7 +10,6 @@
         :root { --bg-dark: #0f172a; --card-bg: #1e293b; --accent: #38bdf8; --accent-gold: #fbbf24; }
         body { background-color: var(--bg-dark); color: #f8fafc; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; min-height: 100vh; position: relative; overflow-x: hidden; }
         
-        /* Flu arka plan resmi */
         #bgOverlay {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -29,7 +28,7 @@
         .person-card.selected { border-color: var(--accent-gold); background: rgba(251, 191, 36, 0.08); }
         .btn-accent { background: var(--accent); color: #0f172a; font-weight: 600; }
         .btn-accent:hover { background: #7dd3fc; color: #0f172a; }
-        .chat-bubble { background: #334155; border-radius: 12px; padding: 18px; margin-bottom: 15px; position: relative; }
+        .chat-bubble { background: #334155; border-radius: 12px; padding: 18px; margin-bottom: 15px; }
         .avatar-img { width: 85px; height: 85px; object-fit: cover; border-radius: 50%; border: 2px solid var(--accent); }
         .avatar-lg { width: 130px; height: 130px; object-fit: cover; border-radius: 50%; border: 3px solid var(--accent-gold); box-shadow: 0 0 20px rgba(251,191,36,0.35); }
         .report-avatar { width: 70px; height: 70px; object-fit: cover; border-radius: 50%; border: 2px solid var(--accent-gold); }
@@ -40,7 +39,6 @@
 <div id="bgOverlay"></div>
 
 <div class="container" style="max-width: 920px;">
-    <!-- Header -->
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h2 class="fw-bold text-warning mb-0"><i class="bi bi-diagram-3-fill me-2"></i>Karar Destek Heyeti</h2>
@@ -54,7 +52,6 @@
         <h4 class="mb-3 text-info"><i class="bi bi-people-fill me-2"></i>1. Danışman Heyetinizi Seçin (Max 4 Kişi)</h4>
         <div class="row g-3 mb-4" id="peopleGrid"></div>
 
-        <!-- Özel Danışman Ekleme -->
         <div class="p-3 bg-dark rounded border border-secondary mb-3">
             <h6 class="text-warning mb-2"><i class="bi bi-person-plus-fill me-1"></i> Listede Olmayan Özel Danışman Ekle</h6>
             <div class="row g-2">
@@ -194,15 +191,17 @@
     document.addEventListener("DOMContentLoaded", function() {
         renderPeople();
         apiModalInstance = new bootstrap.Modal(document.getElementById('apiModal'));
-        if (!localStorage.getItem('gemini_api_key')) apiModalInstance.show();
+        if (!localStorage.getItem('gemini_api_key')) {
+            apiModalInstance.show();
+        }
 
         document.getElementById('btnSettings').addEventListener('click', openSettings);
         document.getElementById('btnNextStep1').addEventListener('click', goToStep2);
-        document.getElementById('btnBackStep2').addEventListener('click', function(){ showStep(1); });
+        document.getElementById('btnBackStep2').addEventListener('click', function() { showStep(1); });
         document.getElementById('btnStartInterview').addEventListener('click', startInterview);
         document.getElementById('btnEarlyReport').addEventListener('click', generateReport);
         document.getElementById('btnSubmitAnswer').addEventListener('click', submitAnswer);
-        document.getElementById('btnPrint').addEventListener('click', function(){ window.print(); });
+        document.getElementById('btnPrint').addEventListener('click', function() { window.print(); });
         document.getElementById('btnCopy').addEventListener('click', copyReport);
         document.getElementById('btnReset').addEventListener('click', resetApp);
         document.getElementById('btnSaveKey').addEventListener('click', saveApiKey);
@@ -215,9 +214,8 @@
             overlay.style.backgroundImage = 'none';
             return;
         }
-        // Son seçilen kişinin resmini flu arka plan yap
         const lastId = selectedPeople[selectedPeople.length - 1];
-        const person = PEOPLE.find(p => p.id === lastId);
+        const person = PEOPLE.find(function(p) { return p.id === lastId; });
         if (person) {
             overlay.style.backgroundImage = 'url(' + person.image + ')';
         }
@@ -225,21 +223,25 @@
 
     function renderPeople() {
         const grid = document.getElementById('peopleGrid');
-        grid.innerHTML = PEOPLE.map(p => {
+        let html = '';
+        for (let i = 0; i < PEOPLE.length; i++) {
+            const p = PEOPLE[i];
             const isSelected = selectedPeople.includes(p.id);
-            return '<div class="col-md-3 col-6">' +
+            html += '<div class="col-md-3 col-6">' +
                 '<div class="card-custom p-3 text-center person-card ' + (isSelected ? 'selected' : '') + '" id="card-' + p.id + '" data-id="' + p.id + '">' +
                 '<img src="' + p.image + '" alt="' + p.name + '" class="avatar-img mb-2">' +
                 '<strong class="d-block text-light small">' + p.name + '</strong>' +
                 '<span class="text-secondary" style="font-size:0.75rem;">' + p.title + '</span>' +
                 '</div></div>';
-        }).join('');
+        }
+        grid.innerHTML = html;
 
-        document.querySelectorAll('.person-card').forEach(card => {
-            card.addEventListener('click', function() {
+        const cards = document.querySelectorAll('.person-card');
+        for (let i = 0; i < cards.length; i++) {
+            cards[i].addEventListener('click', function() {
                 togglePerson(this.getAttribute('data-id'));
             });
-        });
+        }
         updateBackground();
     }
 
@@ -276,7 +278,7 @@
 
     function togglePerson(id) {
         if (selectedPeople.includes(id)) {
-            selectedPeople = selectedPeople.filter(p => p !== id);
+            selectedPeople = selectedPeople.filter(function(p) { return p !== id; });
         } else {
             if (selectedPeople.length >= 4) {
                 alert('En fazla 4 kişi seçebilirsiniz.');
@@ -288,10 +290,10 @@
     }
 
     function showStep(step) {
-        [1,2,3,4].forEach(s => {
+        for (let s = 1; s <= 4; s++) {
             const el = document.getElementById('step' + s);
             if (el) el.classList.add('hidden');
-        });
+        }
         document.getElementById('step' + step).classList.remove('hidden');
     }
 
@@ -323,7 +325,7 @@
             return;
         }
 
-        const person = PEOPLE.find(p => p.id === selectedPeople[currentQuestionIndex]);
+        const person = PEOPLE.find(function(p) { return p.id === selectedPeople[currentQuestionIndex]; });
         document.getElementById('questionCount').innerText = 'Soru ' + (currentQuestionIndex + 1) + ' / ' + selectedPeople.length;
         document.getElementById('progressBar').style.width = ((currentQuestionIndex + 1) / selectedPeople.length * 100) + '%';
 
@@ -334,7 +336,6 @@
         document.getElementById('questionContainer').classList.add('hidden');
         document.getElementById('loadingQuestion').classList.remove('hidden');
 
-        // Arka planı o anki danışmana göre güncelle
         document.getElementById('bgOverlay').style.backgroundImage = 'url(' + person.image + ')';
 
         const prompt = 'Sen ' + person.name + 'sın. Karakterin: ' + person.prompt + '\n\n' +
@@ -351,6 +352,7 @@
             document.getElementById('questionText').innerText = question;
         } catch (e) {
             document.getElementById('questionText').innerText = person.name + ' olarak soruyorum: Bu kararın seni en çok korkutan görünmeyen tarafı nedir?';
+            console.error(e);
         }
 
         document.getElementById('loadingQuestion').classList.add('hidden');
@@ -364,7 +366,7 @@
             return;
         }
 
-        const person = PEOPLE.find(p => p.id === selectedPeople[currentQuestionIndex]);
+        const person = PEOPLE.find(function(p) { return p.id === selectedPeople[currentQuestionIndex]; });
         interviewHistory.push({
             danisman: person.name,
             sorulan_soru: document.getElementById('questionText').innerText,
@@ -382,19 +384,22 @@
     async function generateReport() {
         showStep(4);
 
-        // Rapor üstünde heyet resimleri
         const container = document.getElementById('reportPanelists');
-        container.innerHTML = selectedPeople.map(id => {
-            const p = PEOPLE.find(person => person.id === id);
-            return '<div class="text-center">' +
+        let html = '';
+        for (let i = 0; i < selectedPeople.length; i++) {
+            const p = PEOPLE.find(function(person) { return person.id === selectedPeople[i]; });
+            html += '<div class="text-center">' +
                 '<img src="' + p.image + '" class="report-avatar mb-1">' +
                 '<div class="small fw-bold" style="font-size:0.75rem;">' + p.name + '</div></div>';
-        }).join('');
+        }
+        container.innerHTML = html;
 
         document.getElementById('loadingReport').classList.remove('hidden');
         document.getElementById('reportContent').classList.add('hidden');
 
-        const selectedNames = selectedPeople.map(id => PEOPLE.find(p => p.id === id).name).join(', ');
+        const selectedNames = selectedPeople.map(function(id) {
+            return PEOPLE.find(function(p) { return p.id === id; }).name;
+        }).join(', ');
 
         const prompt = 'Sen heyetin (' + selectedNames + ') sekreteryasısın.\n\n' +
             'Karar: "' + decisionData.title + '"\n' +
@@ -407,11 +412,12 @@
             '<h5><i class="bi bi-list-check"></i> Eylem Planı (3 Adım)</h5><ol><li>...</li></ol>';
 
         try {
-            let html = await fetchGemini(prompt);
-            html = html.replace(/```html/gi, '').replace(/```/g, '').trim();
-            document.getElementById('reportContent').innerHTML = html;
+            let reportHtml = await fetchGemini(prompt);
+            reportHtml = reportHtml.replace(/```html/gi, '').replace(/```/g, '').trim();
+            document.getElementById('reportContent').innerHTML = reportHtml;
         } catch (e) {
-            document.getElementById('reportContent').innerHTML = '<div class="alert alert-danger">Hata: ' + e.message + '</div>';
+            document.getElementById('reportContent').innerHTML = '<div class="alert alert-danger">Rapor oluşturulurken hata oluştu: ' + e.message + '</div>';
+            console.error(e);
         }
 
         document.getElementById('loadingReport').classList.add('hidden');
@@ -434,43 +440,15 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     contents: [{ parts: [{ text: prompt }] }],
-                    generationConfig: { temperature: 0.85, topP: 0.95, maxOutputTokens: 2048 }
+                    generationConfig: {
+                        temperature: 0.85,
+                        topP: 0.95,
+                        maxOutputTokens: 2048
+                    }
                 })
             }
         );
 
         const data = await response.json();
-        if (data.error) throw new Error(data.error.message);
-        if (!data.candidates || !data.candidates[0]) throw new Error('Boş yanıt');
-        return data.candidates[0].content.parts[0].text.trim();
-    }
-
-    function openSettings() {
-        document.getElementById('apiKeyInput').value = localStorage.getItem('gemini_api_key') || '';
-        apiModalInstance.show();
-    }
-
-    function saveApiKey() {
-        const key = document.getElementById('apiKeyInput').value.trim();
-        if (key) {
-            localStorage.setItem('gemini_api_key', key);
-            apiModalInstance.hide();
-        }
-    }
-
-    function copyReport() {
-        navigator.clipboard.writeText(document.getElementById('reportContent').innerText);
-        alert('Rapor kopyalandı');
-    }
-
-    function resetApp() {
-        selectedPeople = [];
-        interviewHistory = [];
-        renderPeople();
-        document.getElementById('decisionTitle').value = '';
-        document.getElementById('decisionDetails').value = '';
-        showStep(1);
-    }
-</script>
-</body>
-</html>
+        if (data.error) {
+            throw new Error(data.error.message);
